@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Avaliação de Staff — VB Nexus</title>
+<style>
+:root{--pu:#534AB7;--pu-l:#EEEDFE;--te:#1D9E75;--te-l:#E1F5EE;--am:#BA7517;--am-l:#FAEEDA;--re:#A32D2D;--gold:#C9A84C;--bg:#F0F2F5;--surf:#fff;--tx:#1A1A2E;--tx2:#5A6278;--tx3:#9099B0;--bord:#E8E8F0;}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;padding:20px;}
+.wrap{max-width:680px;margin:0 auto;}
+.header{background:linear-gradient(135deg,#231E52,#534AB7);border-radius:16px;padding:28px;margin-bottom:20px;color:white;text-align:center;}
+.header-logo{font-size:13px;font-weight:700;background:rgba(255,255,255,.15);border-radius:20px;padding:4px 14px;display:inline-block;margin-bottom:12px;}
+.header h1{font-size:22px;font-weight:700;margin-bottom:4px;}
+.header p{font-size:13px;opacity:.7;}
+.card{background:var(--surf);border:.5px solid var(--bord);border-radius:14px;padding:20px;margin-bottom:14px;}
+.staff-nome{font-size:16px;font-weight:600;color:var(--tx);margin-bottom:2px;}
+.staff-func{font-size:12px;color:var(--tx3);margin-bottom:14px;}
+.crit-label{font-size:12px;font-weight:600;color:var(--tx2);margin-bottom:6px;}
+.stars{display:flex;gap:6px;margin-bottom:12px;}
+.star{font-size:28px;cursor:pointer;color:#D0D0E0;transition:color .15s;user-select:none;-webkit-user-select:none;}
+.star.sel{color:var(--gold);}
+.star:hover{color:var(--gold);}
+.obs-label{font-size:12px;font-weight:600;color:var(--tx2);margin-bottom:5px;}
+textarea{width:100%;padding:9px 12px;border:.5px solid var(--bord);border-radius:8px;font-size:13px;font-family:inherit;color:var(--tx);background:var(--surf);outline:none;resize:vertical;min-height:60px;}
+textarea:focus{border-color:var(--pu);}
+.crit-row{margin-bottom:10px;padding-bottom:10px;border-bottom:.5px solid var(--bord);}
+.crit-row:last-child{border-bottom:none;}
+.btn{display:block;width:100%;padding:14px;background:var(--pu);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px;}
+.btn:disabled{background:var(--tx3);cursor:not-allowed;}
+.done{text-align:center;padding:60px 20px;}
+.done-icon{font-size:56px;margin-bottom:16px;}
+.done h2{font-size:22px;font-weight:700;color:var(--te);margin-bottom:8px;}
+.done p{font-size:14px;color:var(--tx2);}
+.loading{text-align:center;padding:60px 20px;font-size:14px;color:var(--tx3);}
+.erro{background:var(--am-l);border:.5px solid var(--am);border-radius:10px;padding:14px;font-size:13px;color:var(--am);margin-bottom:14px;}
+.progress{background:var(--pu-l);border-radius:20px;padding:7px 14px;font-size:12px;color:var(--pu);font-weight:500;text-align:center;margin-bottom:16px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div id="loading" class="loading">⏳ Carregando avaliação...</div>
+  <div id="app" style="display:none"></div>
+  <div id="done" class="done" style="display:none">
+    <div class="done-icon">🎉</div>
+    <h2>Avaliação enviada!</h2>
+    <p>Obrigado. Suas avaliações foram registradas com sucesso no sistema VB Nexus.</p>
+  </div>
+  <div id="bloqueado" class="done" style="display:none">
+    <div class="done-icon">🔒</div>
+    <h2>Avaliação já realizada</h2>
+    <p>Este link já foi utilizado. Cada link permite apenas uma avaliação.</p>
+  </div>
+</div>
+
+<script>
+var CRITERIOS = ['Pontualidade','Postura','Conhecimento Técnico','Proatividade','Comunicação'];
+var params = new URLSearchParams(window.location.search);
+var EVENTO_ID = params.get('evt')||'';
+var SCRIPT_URL = params.get('url')||'';
+var STORAGE_KEY = 'vbn_aval_done_'+EVENTO_ID;
+
+/* Verificar se já avaliou */
+if(localStorage.getItem(STORAGE_KEY)){
+  document.getElementById('loading').style.display='none';
+  document.getElementById('bloqueado').style.display='block';
+} else if(!EVENTO_ID||!SCRIPT_URL){
+  document.getElementById('loading').innerHTML='<div style="color:var(--re)">❌ Link inválido. Solicite um novo link ao administrador.</div>';
+} else {
+  /* Buscar staff do evento */
+  fetch(SCRIPT_URL+'?action=getStaffEvento&eventoId='+encodeURIComponent(EVENTO_ID))
+    .then(function(r){return r.json();})
+    .then(function(d){
+      document.getElementById('loading').style.display='none';
+      if(d.error||!d.staff||!d.staff.length){
+        document.getElementById('loading').style.display='block';
+        document.getElementById('loading').innerHTML='<div style="color:var(--re)">❌ Nenhum staff encontrado para este evento. Verifique com o administrador.</div>';
+        return;
+      }
+      buildForm(d.eventoNome||'Evento', d.staff);
+    })
+    .catch(function(){
+      document.getElementById('loading').style.display='none';
+      document.getElementById('loading').style.display='block';
+      document.getElementById('loading').innerHTML='<div style="color:var(--re)">❌ Erro ao carregar. Verifique sua conexão e tente novamente.</div>';
+    });
+}
+
+var avaliacoes = {};
+
+function buildForm(eventoNome, staff){
+  var app = document.getElementById('app');
+  app.style.display = 'block';
+
+  /* Header */
+  app.innerHTML = '<div class="header">'+
+    '<div class="header-logo">VB Nexus</div>'+
+    '<h1>Avaliação de Staff</h1>'+
+    '<p>'+eventoNome+'</p>'+
+    '</div>'+
+    '<div class="progress" id="progress">Avalie cada membro do staff abaixo</div>';
+
+  /* Cards por staff */
+  staff.forEach(function(s, si){
+    var notas = {};
+    avaliacoes[s.nome] = {staffNome:s.nome, funcao:(s.funcoes||[]).join(', '), notas:[], obs:''};
+
+    var card = document.createElement('div');
+    card.className = 'card';
+    card.id = 'card-'+si;
+
+    var funcaoStr = (s.funcoes||[]).join(', ')||'Staff';
+    card.innerHTML = '<div class="staff-nome">'+s.nome+'</div>'+
+      '<div class="staff-func">'+funcaoStr+'</div>';
+
+    CRITERIOS.forEach(function(crit, ci){
+      notas[ci] = 0;
+      var row = document.createElement('div');
+      row.className = 'crit-row';
+      row.innerHTML = '<div class="crit-label">'+crit+'</div>';
+
+      var starsDiv = document.createElement('div');
+      starsDiv.className = 'stars';
+
+      for(var k=1;k<=5;k++){
+        var star = document.createElement('span');
+        star.className = 'star';
+        star.textContent = '★';
+        star.dataset.val = k;
+        star.dataset.crit = ci;
+        star.dataset.staff = si;
+        star.addEventListener('click', (function(staffIdx, critIdx, val, starsContainer){
+          return function(){
+            notas[critIdx] = val;
+            avaliacoes[staff[staffIdx].nome].notas[critIdx] = val;
+            /* Atualizar visual */
+            var allStars = starsContainer.querySelectorAll('.star');
+            allStars.forEach(function(st){
+              st.classList.toggle('sel', parseInt(st.dataset.val) <= val);
+            });
+            atualizarProgresso(staff);
+          };
+        })(si, ci, k, starsDiv));
+        starsDiv.appendChild(star);
+      }
+      row.appendChild(starsDiv);
+      card.appendChild(row);
+    });
+
+    /* Observação */
+    var obsDiv = document.createElement('div');
+    obsDiv.innerHTML = '<div class="obs-label">Observação (opcional)</div>';
+    var ta = document.createElement('textarea');
+    ta.placeholder = 'Comentários sobre o desempenho...';
+    ta.addEventListener('input', (function(staffIdx){
+      return function(){
+        avaliacoes[staff[staffIdx].nome].obs = this.value;
+      };
+    })(si));
+    obsDiv.appendChild(ta);
+    card.appendChild(obsDiv);
+    app.appendChild(card);
+  });
+
+  /* Botão enviar */
+  var btnDiv = document.createElement('div');
+  btnDiv.innerHTML = '<button class="btn" id="btn-enviar" onclick="enviarAvaliacoes()">✓ Enviar avaliações</button>'+
+    '<div id="erro-msg"></div>';
+  app.appendChild(btnDiv);
+}
+
+function atualizarProgresso(staff){
+  var total = staff.length * CRITERIOS.length;
+  var preenchidos = 0;
+  Object.values(avaliacoes).forEach(function(av){
+    (av.notas||[]).forEach(function(n){if(n>0)preenchidos++;});
+  });
+  var pct = Math.round(preenchidos/total*100);
+  var el = document.getElementById('progress');
+  if(el) el.textContent = pct+'% preenchido — '+preenchidos+' de '+total+' critérios avaliados';
+}
+
+function enviarAvaliacoes(){
+  var btn = document.getElementById('btn-enviar');
+  var erroEl = document.getElementById('erro-msg');
+
+  /* Validar — todos os critérios preenchidos */
+  var incompleto = false;
+  Object.entries(avaliacoes).forEach(function(entry){
+    var av = entry[1];
+    if(!av.notas||av.notas.length < CRITERIOS.length){incompleto=true;return;}
+    av.notas.forEach(function(n){if(!n||n===0)incompleto=true;});
+  });
+
+  if(incompleto){
+    if(erroEl)erroEl.innerHTML='<div class="erro" style="margin-top:10px">⚠️ Por favor, avalie todos os critérios de cada membro do staff antes de enviar.</div>';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = '⏳ Enviando...';
+
+  var hoje = new Date().toLocaleDateString('pt-BR');
+  var lista = Object.values(avaliacoes).map(function(av){
+    return Object.assign({},av,{data:hoje,eventoId:EVENTO_ID,ts:Date.now()});
+  });
+
+  fetch(SCRIPT_URL, {
+    method:'POST',
+    body: JSON.stringify({action:'saveAvaliacoes', eventoId:EVENTO_ID, avaliacoes:lista})
+  })
+  .then(function(r){return r.json();})
+  .then(function(d){
+    localStorage.setItem(STORAGE_KEY,'1');
+    document.getElementById('app').style.display='none';
+    document.getElementById('done').style.display='block';
+  })
+  .catch(function(){
+    btn.disabled=false;btn.textContent='✓ Enviar avaliações';
+    if(erroEl)erroEl.innerHTML='<div class="erro" style="margin-top:10px">❌ Erro ao enviar. Verifique sua conexão e tente novamente.</div>';
+  });
+}
+</script>
+</body>
+</html>
