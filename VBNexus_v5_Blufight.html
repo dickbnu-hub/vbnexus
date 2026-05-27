@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VB Nexus v5 — Blufight Eventos</title>
+<style>
+:root{
+  --cor:#534AB7;--cor-l:#EEEDFE;--cor-d:#3C3489;
+  --te:#1D9E75;--te-l:#E1F5EE;
+  --re:#A32D2D;--re-l:#FCEBEB;
+  --am:#854F0B;--am-l:#FAEEDA;
+  --bl:#185FA5;--bl-l:#E6F1FB;
+  --bg:#f8f8f6;--bg2:#fff;--bord:#e8e6df;
+  --tx:#1a1a18;--tx2:#5a5a56;--tx3:#9a9a94;
+  --sh:0 1px 3px rgba(0,0,0,.07);
+  --rs:8px;--rm:12px;
+  font-family:'Segoe UI',system-ui,sans-serif;
+}
+@media(prefers-color-scheme:dark){:root{
+  --bg:#16161a;--bg2:#1e1e24;--bord:#2e2e38;
+  --tx:#e8e8e2;--tx2:#a0a09a;--tx3:#606060;
+  --sh:0 1px 3px rgba(0,0,0,.3);
+  --cor-l:#2a2660;--te-l:#0a2e20;--re-l:#2e1010;--bl-l:#0a1e35;--am-l:#2a1e08;
+}}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--tx);min-height:100vh;display:flex;}
+
+/* ── SIDEBAR ── */
+#sidebar{width:220px;min-height:100vh;background:var(--bg2);border-right:1px solid var(--bord);display:flex;flex-direction:column;flex-shrink:0;}
+#sidebar-top{padding:16px;border-bottom:1px solid var(--bord);}
+#sidebar-logo{font-size:15px;font-weight:700;color:var(--cor);letter-spacing:-.3px;}
+#sidebar-sub{font-size:11px;color:var(--tx3);margin-top:1px;}
+#evt-badge{margin-top:10px;background:var(--cor-l);color:var(--cor);font-size:11px;font-weight:600;padding:5px 9px;border-radius:var(--rs);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.snav{padding:8px 8px 0;}
+.snav-sec{font-size:10px;font-weight:600;color:var(--tx3);text-transform:uppercase;letter-spacing:.06em;padding:12px 8px 4px;}
+.ni{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:var(--rs);cursor:pointer;font-size:13px;color:var(--tx2);transition:background .15s;}
+.ni:hover{background:var(--bg);color:var(--tx);}
+.ni.act{background:var(--cor-l);color:var(--cor);font-weight:600;}
+.ni-ico{font-size:15px;width:18px;text-align:center;}
+#sidebar-foot{margin-top:auto;padding:12px 16px;border-top:1px solid var(--bord);font-size:11px;color:var(--tx3);}
+#sync-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 8px;border-radius:20px;background:var(--te-l);color:var(--te);font-weight:600;}
+#sync-badge.err{background:var(--re-l);color:var(--re);}
+#sync-badge.loading{background:var(--am-l);color:var(--am);}
+
+/* ── MAIN ── */
+#main{flex:1;display:flex;flex-direction:column;min-height:100vh;overflow:hidden;}
+#topbar{height:52px;background:var(--bg2);border-bottom:1px solid var(--bord);display:flex;align-items:center;padding:0 20px;gap:12px;flex-shrink:0;}
+#topbar-title{font-size:16px;font-weight:600;color:var(--tx);}
+.tb-spacer{flex:1;}
+.tb-btn{background:none;border:1px solid var(--bord);color:var(--tx2);padding:5px 12px;border-radius:var(--rs);font-size:12px;cursor:pointer;transition:all .15s;}
+.tb-btn:hover{background:var(--bg);color:var(--tx);}
+.tb-btn.pri{background:var(--cor);color:#fff;border-color:var(--cor);}
+.tb-btn.pri:hover{background:var(--cor-d);}
+#content{flex:1;overflow-y:auto;padding:20px;}
+.page{display:none;} .page.act{display:block;}
+
+/* ── CARDS / GRID ── */
+.kgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px;}
+.kpi{background:var(--bg2);border:1px solid var(--bord);border-radius:var(--rm);padding:14px 16px;box-shadow:var(--sh);}
+.kpi-l{font-size:11px;color:var(--tx3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;}
+.kpi-v{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;}
+.kpi-s{font-size:11px;color:var(--tx3);margin-top:2px;}
+.card{background:var(--bg2);border:1px solid var(--bord);border-radius:var(--rm);box-shadow:var(--sh);margin-bottom:16px;overflow:hidden;}
+.card-hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--bord);}
+.card-title{font-size:14px;font-weight:600;}
+.card-body{padding:16px;}
+
+/* ── TABLE ── */
+.tbl{width:100%;border-collapse:collapse;font-size:13px;}
+.tbl th{font-size:11px;font-weight:600;color:var(--tx3);text-transform:uppercase;letter-spacing:.04em;padding:8px 10px;text-align:left;border-bottom:1px solid var(--bord);white-space:nowrap;}
+.tbl td{padding:9px 10px;border-bottom:1px solid var(--bord);vertical-align:middle;}
+.tbl tr:last-child td{border-bottom:none;}
+.tbl tr:hover td{background:var(--bg);}
+.tbl-scroll{overflow-x:auto;}
+.badge{display:inline-flex;align-items:center;font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;}
+.badge-ok{background:var(--te-l);color:var(--te);}
+.badge-pend{background:var(--am-l);color:var(--am);}
+.badge-re{background:var(--re-l);color:var(--re);}
+
+/* ── FORMS / INPUTS ── */
+.field{margin-bottom:12px;}
+.field label{display:block;font-size:12px;font-weight:600;color:var(--tx2);margin-bottom:4px;}
+.field input,.field select,.field textarea{width:100%;padding:8px 10px;border:1px solid var(--bord);border-radius:var(--rs);background:var(--bg);color:var(--tx);font-size:13px;font-family:inherit;transition:border .15s;}
+.field input:focus,.field select:focus{outline:none;border-color:var(--cor);box-shadow:0 0 0 2px rgba(83,74,183,.12);}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.fgrid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:var(--rs);border:1px solid var(--bord);background:var(--bg2);color:var(--tx);font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;font-family:inherit;}
+.btn:hover{background:var(--bg);border-color:var(--tx3);}
+.btn.pri{background:var(--cor);color:#fff;border-color:var(--cor);}
+.btn.pri:hover{background:var(--cor-d);}
+.btn.ok{background:var(--te);color:#fff;border-color:var(--te);}
+.btn.re{background:var(--re);color:#fff;border-color:var(--re);}
+.btn.sm{padding:5px 10px;font-size:12px;}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}
+
+/* ── MISC ── */
+.empty{padding:32px;text-align:center;color:var(--tx3);font-size:13px;}
+.sep{height:1px;background:var(--bord);margin:16px 0;}
+.tag-pago{color:var(--te);font-weight:600;}
+.tag-pend{color:var(--am);font-weight:600;}
+.tag-neg{color:var(--re);font-weight:600;}
+.tag-pos{color:var(--te);font-weight:600;}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;align-items:center;justify-content:center;}
+.modal-bg.show{display:flex;}
+.modal{background:var(--bg2);border-radius:var(--rm);padding:24px;width:480px;max-width:95vw;box-shadow:0 8px 32px rgba(0,0,0,.18);}
+.modal h3{font-size:16px;margin-bottom:16px;}
+#toast{position:fixed;bottom:20px;right:20px;background:var(--tx);color:var(--bg2);padding:10px 16px;border-radius:var(--rs);font-size:13px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:200;}
+#toast.show{opacity:1;}
+.loader{display:inline-block;width:14px;height:14px;border:2px solid var(--bord);border-top-color:var(--cor);border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.prog{height:4px;background:var(--bord);border-radius:2px;overflow:hidden;}
+.prog-f{height:100%;background:var(--cor);border-radius:2px;transition:width .4s;}
+#login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--bg);}
+.login-box{background:var(--bg2);border:1px solid var(--bord);border-radius:var(--rm);padding:32px;width:340px;box-shadow:var(--sh);}
+.login-logo{font-size:22px;font-weight:800;color:var(--cor);margin-bottom:4px;}
+.login-sub{font-size:13px;color:var(--tx3);margin-bottom:24px;}
+/* poupança */
+.mov-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--bord);}
+.mov-row:last-child{border-bottom:none;}
+/* recibo preview */
+.rec-preview{border:1px solid var(--bord);border-radius:var(--rm);padding:20px;font-size:13px;line-height:1.7;}
+/* hist cards */
+.hgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;}
+.hcard{background:var(--bg2);border:1px solid var(--bord);border-radius:var(--rm);padding:14px;box-shadow:var(--sh);}
+.hcard-nome{font-size:14px;font-weight:600;margin-bottom:2px;}
+.hcard-sub{font-size:11px;color:var(--tx3);margin-bottom:10px;}
+.hcard-row{display:flex;justify-content:space-between;font-size:12px;padding:2px 0;}
+.hcard-acts{display:flex;gap:6px;margin-top:10px;}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">VB Nexus</div>
+    <div class="login-sub">Blufight Eventos — Sistema financeiro</div>
+    <div class="field"><label>Perfil</label>
+      <select id="login-perfil">
+        <option value="admin">Admin</option>
+        <option value="operador">Operador</option>
+      </select>
+    </div>
+    <div class="field"><label>Senha</label><input type="password" id="login-senha" placeholder="••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <button class="btn pri" style="width:100%" onclick="doLogin()">Entrar</button>
+    <div id="login-err" style="color:var(--re);font-size:12px;margin-top:8px;display:none;"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" style="display:none;width:100%;display:none;flex:1;">
+  <!-- Sidebar -->
+  <div id="sidebar">
+    <div id="sidebar-top">
+      <div id="sidebar-logo">VB Nexus</div>
+      <div id="sidebar-sub">Blufight Eventos</div>
+      <div id="evt-badge" onclick="nav('configurar')">— nenhum evento —</div>
+    </div>
+    <div class="snav">
+      <div class="snav-sec">Principal</div>
+      <div class="ni act" onclick="nav('dashboard')"><span class="ni-ico">◈</span>Dashboard</div>
+      <div class="ni" onclick="nav('funcoes')"><span class="ni-ico">◉</span>Funções & Staff</div>
+      <div class="ni" onclick="nav('balanco')"><span class="ni-ico">◑</span>Balanço</div>
+      <div class="ni" onclick="nav('poupanca')"><span class="ni-ico">◒</span>Poupança</div>
+      <div class="snav-sec">Evento</div>
+      <div class="ni" onclick="nav('configurar')"><span class="ni-ico">□</span>Configurar</div>
+      <div class="ni" onclick="nav('historico')"><span class="ni-ico">≡</span>Histórico</div>
+      <div class="snav-sec">Operacional</div>
+      <div class="ni" onclick="nav('recibos')"><span class="ni-ico">◻</span>Recibos</div>
+      <div class="ni" onclick="nav('staff')"><span class="ni-ico">◎</span>Staff (Forms)</div>
+      <div class="snav-sec" id="nav-adm-sec">Sistema</div>
+      <div class="ni" id="nav-rel" onclick="nav('relatorios')"><span class="ni-ico">▦</span>Relatórios</div>
+      <div class="ni" id="nav-cfg" onclick="nav('config')"><span class="ni-ico">⚙</span>Configurações</div>
+    </div>
+    <div id="sidebar-foot">
+      <div id="sync-badge" class="loading">⟳ Conectando...</div>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div id="main">
+    <div id="topbar">
+      <span id="topbar-title">Dashboard</span>
+      <div class="tb-spacer"></div>
+      <button class="tb-btn" onclick="syncAgora()">⟳ Sync</button>
+      <button class="tb-btn" onclick="imprimirEvento()">⎙ Imprimir</button>
+      <button class="tb-btn pri" onclick="salvarHistorico()">✎ Salvar histórico</button>
+    </div>
+    <div id="content">
+
+      <!-- DASHBOARD -->
+      <div id="page-dashboard" class="page act">
+        <div class="kgrid">
+          <div class="kpi"><div class="kpi-l">Entrada</div><div class="kpi-v tag-pos" id="k-ent">R$ 0</div><div class="kpi-s" id="k-atl">0 atletas</div></div>
+          <div class="kpi"><div class="kpi-l">Pagamentos</div><div class="kpi-v tag-neg" id="k-pag">R$ 0</div><div class="kpi-s" id="k-nfuncs">0 lançamentos</div></div>
+          <div class="kpi"><div class="kpi-l">Pendente</div><div class="kpi-v tag-pend" id="k-pend">R$ 0</div><div class="kpi-s" id="k-npend">0 pendentes</div></div>
+          <div class="kpi"><div class="kpi-l">Lucro</div><div class="kpi-v" id="k-luc" style="color:var(--cor)">R$ 0</div><div class="kpi-s">após pagamentos</div></div>
+          <div class="kpi"><div class="kpi-l">Poupança (10%)</div><div class="kpi-v" id="k-poup" style="color:var(--bl)">R$ 0</div><div class="kpi-s">reserva do lucro</div></div>
+        </div>
+        <div class="card">
+          <div class="card-hdr"><span class="card-title">Últimos lançamentos</span><button class="btn sm" onclick="nav('funcoes')">Ver todos</button></div>
+          <div class="tbl-scroll"><table class="tbl" id="dash-tbl"><tbody><tr><td colspan="4" class="empty">Nenhum lançamento</td></tr></tbody></table></div>
+        </div>
+      </div>
+
+      <!-- FUNÇÕES -->
+      <div id="page-funcoes" class="page">
+        <div class="card">
+          <div class="card-hdr">
+            <span class="card-title">Funções & Staff</span>
+            <div style="display:flex;gap:8px">
+              <button class="btn sm" onclick="abrirModalFunc()">+ Adicionar</button>
+              <button class="btn sm" onclick="nav('staff')">+ Do Forms</button>
+            </div>
+          </div>
+          <div style="padding:10px 16px;border-bottom:1px solid var(--bord);display:flex;gap:8px;flex-wrap:wrap;">
+            <input type="text" id="filt-nome" placeholder="Buscar nome..." style="padding:5px 9px;border:1px solid var(--bord);border-radius:var(--rs);font-size:12px;background:var(--bg);color:var(--tx);width:180px" oninput="renderFuncs()">
+            <select id="filt-status" style="padding:5px 9px;border:1px solid var(--bord);border-radius:var(--rs);font-size:12px;background:var(--bg);color:var(--tx)" onchange="renderFuncs()">
+              <option value="">Todos</option><option value="pago">Pagos</option><option value="pendente">Pendentes</option>
+            </select>
+          </div>
+          <div class="tbl-scroll"><table class="tbl" id="funcs-tbl">
+            <thead><tr><th>#</th><th>Função</th><th>Staff</th><th>Valor</th><th>Status</th><th></th></tr></thead>
+            <tbody id="funcs-body"><tr><td colspan="6" class="empty">Nenhum lançamento</td></tr></tbody>
+          </table></div>
+        </div>
+      </div>
+
+      <!-- BALANÇO -->
+      <div id="page-balanco" class="page">
+        <div class="fgrid">
+          <div class="card">
+            <div class="card-hdr"><span class="card-title">Receitas</span></div>
+            <div class="card-body">
+              <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bord)"><span style="font-size:13px">Inscrições</span><span class="tag-pos" id="bl-ent" style="font-size:13px;font-weight:600">R$ 0</span></div>
+              <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bord)"><span style="font-size:13px">Entradas futuras</span><span class="tag-pos" id="bl-fut" style="font-size:13px;font-weight:600">R$ 0</span></div>
+              <div style="display:flex;justify-content:space-between;padding:8px 0 0"><span style="font-size:14px;font-weight:600">Total</span><span class="tag-pos" id="bl-tot-rec" style="font-size:14px;font-weight:700">R$ 0</span></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-hdr"><span class="card-title">Despesas</span></div>
+            <div class="card-body">
+              <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bord)"><span style="font-size:13px">Staff pago</span><span class="tag-neg" id="bl-pag" style="font-size:13px;font-weight:600">R$ 0</span></div>
+              <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bord)"><span style="font-size:13px">Staff pendente</span><span class="tag-pend" id="bl-pend" style="font-size:13px;font-weight:600">R$ 0</span></div>
+              <div style="display:flex;justify-content:space-between;padding:8px 0 0"><span style="font-size:14px;font-weight:600">Total despesas</span><span class="tag-neg" id="bl-tot-des" style="font-size:14px;font-weight:700">R$ 0</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-hdr"><span class="card-title">Resultado</span></div>
+          <div class="card-body">
+            <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bord)"><span style="font-size:13px">( + ) Entradas</span><span class="tag-pos" id="bl-r-ent" style="font-size:13px;font-weight:600">R$ 0</span></div>
+            <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bord)"><span style="font-size:13px">( − ) Pagamentos</span><span class="tag-neg" id="bl-r-pag" style="font-size:13px;font-weight:600">R$ 0</span></div>
+            <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bord)"><span style="font-size:13px">( − ) Poupança (reserva)</span><span style="color:var(--bl);font-size:13px;font-weight:600" id="bl-r-poup">R$ 0</span></div>
+            <div style="display:flex;justify-content:space-between;padding:8px 0 0"><span style="font-size:15px;font-weight:700">Lucro líquido</span><span style="color:var(--cor);font-size:16px;font-weight:800" id="bl-r-luc">R$ 0</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- POUPANÇA -->
+      <div id="page-poupanca" class="page">
+        <div class="kgrid" style="grid-template-columns:repeat(3,1fr)">
+          <div class="kpi"><div class="kpi-l">Total acumulado</div><div class="kpi-v" id="poup-total" style="color:var(--bl)">R$ 0</div></div>
+          <div class="kpi"><div class="kpi-l">Entradas</div><div class="kpi-v tag-pos" id="poup-ent">R$ 0</div></div>
+          <div class="kpi"><div class="kpi-l">Saídas</div><div class="kpi-v tag-neg" id="poup-sai">R$ 0</div></div>
+        </div>
+        <div class="card">
+          <div class="card-hdr"><span class="card-title">Movimentações</span>
+            <div style="display:flex;gap:6px">
+              <button class="btn sm ok" onclick="addMovPoup('entrada')">+ Entrada</button>
+              <button class="btn sm re" onclick="addMovPoup('saida')">− Saída</button>
+            </div>
+          </div>
+          <div id="poup-movs" class="card-body"><div class="empty">Nenhuma movimentação</div></div>
+        </div>
+      </div>
+
+      <!-- CONFIGURAR EVENTO -->
+      <div id="page-configurar" class="page">
+        <div class="card">
+          <div class="card-hdr"><span class="card-title">Dados do evento</span></div>
+          <div class="card-body">
+            <div class="fgrid">
+              <div class="field"><label>Nome do evento</label><input type="text" id="inp-nome" placeholder="Ex: 3ª Etapa Circuito Mormaii" oninput="autoSave()"></div>
+              <div class="field"><label>Data</label><input type="date" id="inp-data" oninput="autoSave()"></div>
+              <div class="field"><label>Nº de atletas</label><input type="number" id="inp-atl" value="0" oninput="autoSave();recalc()"></div>
+              <div class="field"><label>Entrada (R$)</label><input type="number" id="inp-ent" value="0" oninput="autoSave();recalc()"></div>
+              <div class="field"><label>Entradas futuras (R$)</label><input type="number" id="inp-fut" value="0" oninput="autoSave();recalc()"></div>
+              <div class="field"><label>% Poupança</label><input type="number" id="inp-poup" value="10" min="0" max="100" oninput="autoSave();recalc()"></div>
+            </div>
+            <div class="btn-row">
+              <button class="btn pri" onclick="salvarEvento()">Salvar evento no Sheets</button>
+              <button class="btn" onclick="novoEvento()">+ Novo evento</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- HISTÓRICO -->
+      <div id="page-historico" class="page">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <span style="font-size:13px;color:var(--tx3)" id="hist-count">0 eventos</span>
+          <button class="btn sm re" onclick="limparHistorico()">🗑 Limpar tudo</button>
+        </div>
+        <div id="hist-grid" class="hgrid"></div>
+      </div>
+
+      <!-- RECIBOS -->
+      <div id="page-recibos" class="page">
+        <div class="card">
+          <div class="card-hdr"><span class="card-title">Recibos emitidos</span>
+            <button class="btn sm pri" onclick="abrirModalRecibo()">+ Novo recibo</button>
+          </div>
+          <div class="tbl-scroll"><table class="tbl">
+            <thead><tr><th>Nº</th><th>Staff</th><th>Função</th><th>Valor</th><th>Data</th><th>Assinado</th><th></th></tr></thead>
+            <tbody id="rec-body"><tr><td colspan="7" class="empty">Nenhum recibo</td></tr></tbody>
+          </table></div>
+        </div>
+      </div>
+
+      <!-- STAFF FORMS -->
+      <div id="page-staff" class="page">
+        <div class="card">
+          <div class="card-hdr"><span class="card-title">Staff cadastrado (Google Forms)</span>
+            <button class="btn sm" onclick="carregarStaff()">⟳ Atualizar</button>
+          </div>
+          <div class="tbl-scroll"><table class="tbl">
+            <thead><tr><th>Nome</th><th>Função(ões)</th><th>PIX</th><th>Telefone</th><th></th></tr></thead>
+            <tbody id="staff-body"><tr><td colspan="5" class="empty">Clique em "Atualizar" para carregar</td></tr></tbody>
+          </table></div>
+        </div>
+      </div>
+
+      <!-- RELATÓRIOS -->
+      <div id="page-relatorios" class="page">
+        <div class="kgrid">
+          <div class="kpi"><div class="kpi-l">Total entradas (todos)</div><div class="kpi-v tag-pos" id="rel-ent">R$ 0</div></div>
+          <div class="kpi"><div class="kpi-l">Total pagamentos</div><div class="kpi-v tag-neg" id="rel-pag">R$ 0</div></div>
+          <div class="kpi"><div class="kpi-l">Lucro total</div><div class="kpi-v" id="rel-luc" style="color:var(--cor)">R$ 0</div></div>
+          <div class="kpi"><div class="kpi-l">Poupança acumulada</div><div class="kpi-v" id="rel-poup" style="color:var(--bl)">R$ 0</div></div>
+        </div>
+        <div class="btn-row" style="margin-bottom:16px">
+          <button class="btn pri" onclick="exportPDF()">⎙ PDF Executivo</button>
+          <button class="btn" onclick="exportExcel()">↓ Excel</button>
+        </div>
+        <div class="card">
+          <div class="card-hdr"><span class="card-title">Histórico de eventos</span></div>
+          <div class="tbl-scroll"><table class="tbl">
+            <thead><tr><th>#</th><th>Evento</th><th>Data</th><th>Atletas</th><th>Entrada</th><th>Pagamentos</th><th>Lucro</th><th>Poupança</th></tr></thead>
+            <tbody id="rel-body"><tr><td colspan="8" class="empty">Sem histórico</td></tr></tbody>
+          </table></div>
+        </div>
+      </div>
+
+      <!-- CONFIGURAÇÕES -->
+      <div id="page-config" class="page">
+        <div class="card">
+          <div class="card-hdr"><span class="card-title">Google Apps Script</span></div>
+          <div class="card-body">
+            <div class="field"><label>URL do Apps Script</label><input type="text" id="cfg-url" placeholder="https://script.google.com/macros/s/..."></div>
+            <button class="btn pri" onclick="salvarConfig()">Salvar URL</button>
+            <button class="btn sm" style="margin-left:8px" onclick="testarConexao()">Testar conexão</button>
+            <div id="cfg-status" style="margin-top:10px;font-size:12px;color:var(--tx3)"></div>
+          </div>
+        </div>
+        <div class="card" style="margin-top:16px">
+          <div class="card-hdr"><span class="card-title">Senhas</span></div>
+          <div class="card-body">
+            <div class="fgrid">
+              <div class="field"><label>Senha Admin</label><input type="password" id="cfg-sen-admin" placeholder="Nova senha"></div>
+              <div class="field"><label>Senha Operador</label><input type="password" id="cfg-sen-op" placeholder="Nova senha"></div>
+            </div>
+            <button class="btn" onclick="salvarSenhas()">Salvar senhas</button>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- MODAL FUNÇÃO -->
+<div id="modal-func" class="modal-bg">
+  <div class="modal">
+    <h3 id="mf-title">Adicionar lançamento</h3>
+    <div class="fgrid">
+      <div class="field"><label>Função / Descrição</label><input type="text" id="mf-nome" placeholder="Ex: Árbitro, Mesário..."></div>
+      <div class="field"><label>Staff / Responsável</label><input type="text" id="mf-staff"></div>
+      <div class="field"><label>CPF</label><input type="text" id="mf-cpf" placeholder="000.000.000-00"></div>
+      <div class="field"><label>PIX</label><input type="text" id="mf-pix"></div>
+      <div class="field"><label>Valor (R$)</label><input type="number" id="mf-valor" value="0" min="0"></div>
+      <div class="field"><label>Status</label>
+        <select id="mf-pago"><option value="false">Pendente</option><option value="true">Pago</option></select>
+      </div>
+    </div>
+    <input type="hidden" id="mf-id">
+    <div class="btn-row">
+      <button class="btn pri" onclick="salvarFunc()">Salvar no Sheets</button>
+      <button class="btn" onclick="fecharModal('modal-func')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL RECIBO -->
+<div id="modal-rec" class="modal-bg">
+  <div class="modal" style="width:520px">
+    <h3>Novo recibo</h3>
+    <div class="fgrid">
+      <div class="field"><label>Staff</label><input type="text" id="mr-staff"></div>
+      <div class="field"><label>CPF</label><input type="text" id="mr-cpf"></div>
+      <div class="field"><label>Função</label><input type="text" id="mr-func"></div>
+      <div class="field"><label>Valor (R$)</label><input type="number" id="mr-valor" value="0"></div>
+      <div class="field"><label>PIX</label><input type="text" id="mr-pix"></div>
+      <div class="field"><label>Tipo PIX</label>
+        <select id="mr-tipopix"><option>CPF</option><option>Telefone</option><option>Email</option><option>Aleatória</option></select>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn pri" onclick="emitirRecibo()">Emitir e salvar</button>
+      <button class="btn" onclick="fecharModal('modal-rec')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+// ══════════════════════════════════════════════════════
+// CONFIG — edite aqui se necessário
+// ══════════════════════════════════════════════════════
+var CFG = {
+  empresa: 'Blufight Eventos',
+  cor: '#534AB7',
+  responsavel: 'Marcos Vinicius da Silva Cunha',
+  pct1: 40, pct2: 60, temSocio2: true
+};
+
+// ══════════════════════════════════════════════════════
+// ESTADO — tudo em memória, fonte única = Sheets
+// ══════════════════════════════════════════════════════
+var ST = {
+  url: localStorage.getItem('vbn5_url')||'',       // só a URL fica local (não é dado)
+  senAdmin: localStorage.getItem('vbn5_sa')||'admin',
+  senOp: localStorage.getItem('vbn5_so')||'operador',
+  perfil: '',
+  eventoId: '',
+  evento: null,    // objeto do evento ativo
+  funcs: [],       // lançamentos do evento ativo
+  recibos: [],     // recibos do evento ativo
+  hist: [],        // histórico de eventos
+  poupMovs: [],    // movimentações de poupança
+  staffForms: [],  // staff carregado do Forms
+  proxRec: 1
+};
+
+// ══════════════════════════════════════════════════════
+// UTILITÁRIOS
+// ══════════════════════════════════════════════════════
+function fmt(v){return 'R$ '+(parseFloat(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function sv(id,v){var e=document.getElementById(id);if(e)e.textContent=v;}
+function gv(id){return parseFloat(document.getElementById(id)?.value)||0;}
+function gs(id){return (document.getElementById(id)?.value||'').trim();}
+function set(id,v){var e=document.getElementById(id);if(e)e.value=v===null||v===undefined?'':v;}
+function newId(){return 'id_'+Date.now()+'_'+Math.random().toString(36).slice(2,6);}
+function toast(msg,dur){
+  var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
+  setTimeout(function(){t.classList.remove('show');},(dur||2200));
+}
+
+// ══════════════════════════════════════════════════════
+// API — Sheets como único banco
+// ══════════════════════════════════════════════════════
+function apiPost(data){
+  var url=ST.url;if(!url)return Promise.reject(new Error('URL não configurada'));
+  return fetch(url,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(data)})
+    .then(function(r){return r.json();});
+}
+function apiGet(params){
+  var url=ST.url;if(!url)return Promise.reject(new Error('URL não configurada'));
+  var qs=Object.keys(params).map(function(k){return k+'='+encodeURIComponent(params[k]);}).join('&');
+  return fetch(url+'?'+qs).then(function(r){return r.json();});
+}
+function setSyncStatus(msg,tipo){
+  var b=document.getElementById('sync-badge');if(!b)return;
+  b.textContent=msg;b.className='';b.classList.add(tipo==='ok'?'':'loading');
+  if(tipo==='ok'){b.style.background='var(--te-l)';b.style.color='var(--te)';}
+  else if(tipo==='err'){b.style.background='var(--re-l)';b.style.color='var(--re)';}
+  else{b.style.background='var(--am-l)';b.style.color='var(--am)';}
+}
+
+// ══════════════════════════════════════════════════════
+// LOGIN
+// ══════════════════════════════════════════════════════
+function doLogin(){
+  var perfil=gs('login-perfil'), senha=gs('login-senha');
+  var ok=(perfil==='admin'&&senha===ST.senAdmin)||(perfil==='operador'&&senha===ST.senOp);
+  if(!ok){var e=document.getElementById('login-err');e.textContent='Senha incorreta';e.style.display='block';return;}
+  ST.perfil=perfil;
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app').style.display='flex';
+  if(perfil==='operador'){
+    document.getElementById('nav-adm-sec').style.display='none';
+    document.getElementById('nav-rel').style.display='none';
+    document.getElementById('nav-cfg').style.display='none';
+  }
+  if(ST.url) carregarTudo(); else nav('config');
+}
+
+// ══════════════════════════════════════════════════════
+// CARREGAR TUDO DO SHEETS
+// ══════════════════════════════════════════════════════
+function carregarTudo(){
+  setSyncStatus('⟳ Carregando...','load');
+  apiGet({action:'carregarTudo'}).then(function(d){
+    if(d.error){setSyncStatus('⚠ Erro','err');toast('Erro: '+d.error);return;}
+    ST.hist = d.historico||[];
+    ST.poupMovs = d.poupMov||[];
+    ST.proxRec = d.proxRec||1;
+    // Carregar evento mais recente se houver
+    if(d.evento){
+      ST.evento = d.evento;
+      ST.eventoId = d.evento.id;
+      ST.funcs = d.funcoes||[];
+      ST.recibos = d.recibos||[];
+      atualizarCamposEvento();
+    }
+    setSyncStatus('✓ '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),'ok');
+    recalc();renderFuncs();renderRecibos();renderHist();renderPoupanca();renderRelatorios();
+  }).catch(function(err){setSyncStatus('⚠ Offline','err');toast('Sem conexão com Sheets');});
+}
+function syncAgora(){carregarTudo();}
+
+// ══════════════════════════════════════════════════════
+// EVENTO
+// ══════════════════════════════════════════════════════
+function atualizarCamposEvento(){
+  if(!ST.evento)return;
+  set('inp-nome',ST.evento.nome);
+  set('inp-data',ST.evento.data);
+  set('inp-atl',ST.evento.atletas||0);
+  set('inp-ent',ST.evento.entrada||0);
+  set('inp-fut',ST.evento.futura||0);
+  set('inp-poup',ST.evento.poupPct||10);
+  var b=document.getElementById('evt-badge');
+  if(b)b.textContent=ST.evento.nome||(ST.evento.data||'—');
+  recalc();
+}
+function autoSave(){
+  // Salva só no estado local enquanto digita; grava no Sheets ao clicar "Salvar"
+  if(!ST.evento)ST.evento={id:newId()};
+  ST.evento.nome=gs('inp-nome');
+  ST.evento.data=gs('inp-data');
+  ST.evento.atletas=parseInt(document.getElementById('inp-atl')?.value)||0;
+  ST.evento.entrada=gv('inp-ent');
+  ST.evento.futura=gv('inp-fut');
+  ST.evento.poupPct=gv('inp-poup');
+  var b=document.getElementById('evt-badge');
+  if(b)b.textContent=ST.evento.nome||'—';
+}
+function salvarEvento(){
+  autoSave();if(!ST.evento.nome){toast('Preencha o nome do evento');return;}
+  setSyncStatus('⟳ Salvando...','load');
+  apiPost({action:'salvarEvento',evento:ST.evento}).then(function(d){
+    if(d.ok){toast('Evento salvo no Sheets ✓');setSyncStatus('✓ Salvo','ok');}
+    else{toast('Erro ao salvar: '+(d.error||'?'));setSyncStatus('⚠ Erro','err');}
+  }).catch(function(){toast('Sem conexão');setSyncStatus('⚠ Offline','err');});
+}
+function novoEvento(){
+  if(!confirm('Criar novo evento? O evento atual continua salvo no Sheets.'))return;
+  ST.evento={id:newId()};ST.eventoId=ST.evento.id;ST.funcs=[];ST.recibos=[];
+  set('inp-nome','');set('inp-data','');set('inp-atl',0);set('inp-ent',0);set('inp-fut',0);set('inp-poup',10);
+  document.getElementById('evt-badge').textContent='— novo evento —';
+  renderFuncs();renderRecibos();recalc();nav('configurar');
+  toast('Novo evento criado. Configure e salve.');
+}
+
+// ══════════════════════════════════════════════════════
+// FUNÇÕES / LANÇAMENTOS
+// ══════════════════════════════════════════════════════
+function abrirModalFunc(id){
+  var f=id?ST.funcs.find(function(x){return x.id===id;}):null;
+  set('mf-id',f?f.id:'');set('mf-nome',f?f.nome:'');set('mf-staff',f?f.staff:'');
+  set('mf-cpf',f?f.cpf:'');set('mf-pix',f?f.pix:'');set('mf-valor',f?f.valor:0);
+  var ps=document.getElementById('mf-pago');if(ps)ps.value=f?(f.pago?'true':'false'):'false';
+  document.getElementById('mf-title').textContent=f?'Editar lançamento':'Adicionar lançamento';
+  document.getElementById('modal-func').classList.add('show');
+}
+function salvarFunc(){
+  var id=gs('mf-id')||newId();
+  var f={id:id,eventoId:ST.eventoId,nome:gs('mf-nome'),staff:gs('mf-staff'),
+    cpf:gs('mf-cpf'),pix:gs('mf-pix'),valor:gv('mf-valor'),
+    pago:document.getElementById('mf-pago').value==='true',ts:Date.now()};
+  if(!f.nome){toast('Preencha a função');return;}
+  setSyncStatus('⟳ Salvando...','load');
+  apiPost({action:'salvarFuncao',funcao:f}).then(function(d){
+    if(d.ok){
+      var idx=ST.funcs.findIndex(function(x){return x.id===id;});
+      if(idx>=0)ST.funcs[idx]=f; else ST.funcs.unshift(f);
+      fecharModal('modal-func');renderFuncs();recalc();
+      toast((gs('mf-id')?'Atualizado':'Adicionado')+' ✓');setSyncStatus('✓ Salvo','ok');
+    } else {toast('Erro: '+(d.error||'?'));setSyncStatus('⚠ Erro','err');}
+  }).catch(function(){toast('Sem conexão');setSyncStatus('⚠ Offline','err');});
+}
+function togglePago(id){
+  var f=ST.funcs.find(function(x){return x.id===id;});if(!f)return;
+  f.pago=!f.pago;f.ts=Date.now();
+  apiPost({action:'salvarFuncao',funcao:f}).then(function(d){
+    if(d.ok){renderFuncs();recalc();toast(f.pago?'Marcado como pago ✓':'Desmarcado');}
+    else{f.pago=!f.pago;toast('Erro ao atualizar');}
+  }).catch(function(){f.pago=!f.pago;toast('Sem conexão');});
+}
+function excluirFunc(id){
+  if(!confirm('Excluir este lançamento do Sheets?'))return;
+  apiPost({action:'excluirFuncao',id:id,eventoId:ST.eventoId}).then(function(d){
+    if(d.ok){ST.funcs=ST.funcs.filter(function(x){return x.id!==id;});renderFuncs();recalc();toast('Excluído ✓');}
+    else toast('Erro: '+(d.error||'?'));
+  }).catch(function(){toast('Sem conexão');});
+}
+function renderFuncs(){
+  var filtNome=(document.getElementById('filt-nome')?.value||'').toLowerCase();
+  var filtSt=document.getElementById('filt-status')?.value||'';
+  var lista=ST.funcs.filter(function(f){
+    if(filtNome&&!(f.nome.toLowerCase().includes(filtNome)||f.staff.toLowerCase().includes(filtNome)))return false;
+    if(filtSt==='pago'&&!f.pago)return false;
+    if(filtSt==='pendente'&&f.pago)return false;
+    return true;
+  });
+  var tbody=document.getElementById('funcs-body');if(!tbody)return;
+  if(!lista.length){tbody.innerHTML='<tr><td colspan="6" class="empty">Nenhum lançamento</td></tr>';return;}
+  tbody.innerHTML=lista.map(function(f,i){
+    return '<tr>'+
+      '<td style="color:var(--tx3)">'+(i+1)+'</td>'+
+      '<td style="font-weight:500">'+esc(f.nome)+'</td>'+
+      '<td>'+esc(f.staff||'—')+'</td>'+
+      '<td style="font-weight:600">'+fmt(f.valor)+'</td>'+
+      '<td><span class="badge '+(f.pago?'badge-ok':'badge-pend')+'" style="cursor:pointer" onclick="togglePago(\''+f.id+'\')">'+
+        (f.pago?'Pago':'Pendente')+'</span></td>'+
+      '<td style="white-space:nowrap">'+
+        '<button class="btn sm" onclick="abrirModalFunc(\''+f.id+'\')">✎</button> '+
+        '<button class="btn sm re" onclick="excluirFunc(\''+f.id+'\')" style="padding:4px 8px">✕</button>'+
+      '</td></tr>';
+  }).join('');
+}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+// ══════════════════════════════════════════════════════
+// RECALC — métricas do evento
+// ══════════════════════════════════════════════════════
+function recalc(){
+  var ent=gv('inp-ent'),fut=gv('inp-fut'),atl=parseInt(document.getElementById('inp-atl')?.value)||0;
+  var poupPct=gv('inp-poup')/100;
+  var pago=ST.funcs.filter(function(f){return f.pago;}).reduce(function(s,f){return s+(f.valor||0);},0);
+  var pend=ST.funcs.filter(function(f){return !f.pago;}).reduce(function(s,f){return s+(f.valor||0);},0);
+  var tot=pago+pend;
+  var luc=ent-tot, poup=luc>0?luc*poupPct:0, lucL=luc-poup;
+  // KPIs dashboard
+  sv('k-ent',fmt(ent));sv('k-atl',atl+' atletas');
+  sv('k-pag',fmt(pago));sv('k-nfuncs',ST.funcs.length+' lançamentos');
+  sv('k-pend',fmt(pend));sv('k-npend',ST.funcs.filter(function(f){return !f.pago;}).length+' pendentes');
+  sv('k-luc',fmt(luc));sv('k-poup',fmt(poup));
+  // Balanço
+  sv('bl-ent',fmt(ent));sv('bl-fut',fmt(fut));sv('bl-tot-rec',fmt(ent+fut));
+  sv('bl-pag',fmt(pago));sv('bl-pend',fmt(pend));sv('bl-tot-des',fmt(tot));
+  sv('bl-r-ent',fmt(ent));sv('bl-r-pag',fmt(tot));sv('bl-r-poup',fmt(poup));sv('bl-r-luc',fmt(lucL));
+  // Cor lucro
+  var el=document.getElementById('k-luc');if(el)el.style.color=luc>=0?'var(--te)':'var(--re)';
+  var el2=document.getElementById('bl-r-luc');if(el2)el2.style.color=lucL>=0?'var(--cor)':'var(--re)';
+  // Dash tabela (ultimos 8)
+  var tbody=document.getElementById('dash-tbl')?.querySelector('tbody');
+  if(tbody){
+    var ultimos=ST.funcs.slice(0,8);
+    if(!ultimos.length){tbody.innerHTML='<tr><td colspan="4" class="empty">Nenhum lançamento</td></tr>';}
+    else tbody.innerHTML=ultimos.map(function(f){return '<tr>'+
+      '<td style="font-weight:500">'+esc(f.nome)+'</td><td style="color:var(--tx2)">'+esc(f.staff||'—')+'</td>'+
+      '<td style="font-weight:600">'+fmt(f.valor)+'</td>'+
+      '<td><span class="badge '+(f.pago?'badge-ok':'badge-pend')+'">'+(f.pago?'Pago':'Pendente')+'</span></td></tr>';
+    }).join('');
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// HISTÓRICO
+// ══════════════════════════════════════════════════════
+function salvarHistorico(){
+  autoSave();if(!ST.evento||!ST.evento.nome){toast('Configure o evento primeiro');return;}
+  var ent=gv('inp-ent'),poupPct=gv('inp-poup')/100;
+  var pago=ST.funcs.filter(function(f){return f.pago;}).reduce(function(s,f){return s+(f.valor||0);},0);
+  var pend=ST.funcs.filter(function(f){return !f.pago;}).reduce(function(s,f){return s+(f.valor||0);},0);
+  var tot=pago+pend,luc=ent-tot,poup=luc>0?luc*poupPct:0;
+  var entry={id:newId(),evId:ST.eventoId,nome:ST.evento.nome,data:ST.evento.data||'',
+    atletas:parseInt(document.getElementById('inp-atl')?.value)||0,
+    entrada:ent,pago:pago,pendente:pend,lucro:luc,poup:poup,
+    funcCount:ST.funcs.length,ts:Date.now()};
+  setSyncStatus('⟳ Salvando...','load');
+  apiPost({action:'salvarHistorico',entrada:entry}).then(function(d){
+    if(d.ok){
+      // Deduplicar localmente por evId
+      ST.hist=ST.hist.filter(function(h){return h.evId!==ST.eventoId;});
+      ST.hist.unshift(entry);
+      renderHist();renderRelatorios();
+      toast('Salvo no histórico ✓');setSyncStatus('✓ Salvo','ok');
+    } else {toast('Erro: '+(d.error||'?'));setSyncStatus('⚠ Erro','err');}
+  }).catch(function(){toast('Sem conexão');setSyncStatus('⚠ Offline','err');});
+}
+function carregarDoHist(evId){
+  if(!confirm('Carregar este evento? Os campos atuais serão substituídos.'))return;
+  setSyncStatus('⟳ Carregando...','load');
+  apiGet({action:'carregarEvento',evId:evId}).then(function(d){
+    if(d.ok){
+      ST.eventoId=evId;ST.evento=d.evento;
+      ST.funcs=d.funcoes||[];ST.recibos=d.recibos||[];
+      atualizarCamposEvento();renderFuncs();renderRecibos();recalc();
+      nav('dashboard');toast('Evento carregado ✓');setSyncStatus('✓ Carregado','ok');
+    } else toast('Erro: '+(d.error||'?'));
+  }).catch(function(){toast('Sem conexão');});
+}
+function excluirDoHist(id){
+  if(!confirm('Excluir este registro do histórico no Sheets?'))return;
+  apiPost({action:'excluirHistorico',id:id}).then(function(d){
+    if(d.ok){ST.hist=ST.hist.filter(function(h){return h.id!==id;});renderHist();renderRelatorios();toast('Removido ✓');}
+    else toast('Erro: '+(d.error||'?'));
+  }).catch(function(){toast('Sem conexão');});
+}
+function limparHistorico(){
+  if(!confirm('Apagar TODO o histórico do Sheets? Esta ação não pode ser desfeita.'))return;
+  apiPost({action:'limparHistorico'}).then(function(d){
+    if(d.ok){ST.hist=[];renderHist();renderRelatorios();toast('Histórico limpo ✓');}
+    else toast('Erro: '+(d.error||'?'));
+  }).catch(function(){toast('Sem conexão');});
+}
+function renderHist(){
+  sv('hist-count',ST.hist.length+' eventos');
+  var g=document.getElementById('hist-grid');if(!g)return;
+  if(!ST.hist.length){g.innerHTML='<div class="empty">Nenhum evento salvo no histórico</div>';return;}
+  g.innerHTML=ST.hist.map(function(h){
+    var df=h.data?new Date(h.data+'T12:00:00').toLocaleDateString('pt-BR'):'—';
+    return '<div class="hcard">'+
+      '<div class="hcard-nome">'+esc(h.nome)+'</div>'+
+      '<div class="hcard-sub">'+df+' · '+(h.atletas||0)+' atletas · '+(h.funcCount||0)+' funções</div>'+
+      '<div class="hcard-row"><span style="color:var(--tx3)">Entrada</span><span class="tag-pos" style="font-weight:600">'+fmt(h.entrada||0)+'</span></div>'+
+      '<div class="hcard-row"><span style="color:var(--tx3)">Pagamentos</span><span class="tag-neg" style="font-weight:600">'+fmt(h.pago||0)+'</span></div>'+
+      '<div class="hcard-row"><span style="color:var(--tx3)">Lucro</span><span style="color:var(--cor);font-weight:700">'+fmt(h.lucro||0)+'</span></div>'+
+      '<div class="hcard-row"><span style="color:var(--tx3)">Poupança</span><span style="color:var(--bl);font-weight:600">'+fmt(h.poup||0)+'</span></div>'+
+      '<div class="hcard-acts">'+
+        '<button class="btn sm" onclick="carregarDoHist(\''+h.evId+'\')">↩ Carregar</button>'+
+        '<button class="btn sm re" onclick="excluirDoHist(\''+h.id+'\')">✕</button>'+
+      '</div></div>';
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════════
+// POUPANÇA
+// ══════════════════════════════════════════════════════
+function renderPoupanca(){
+  var ent=ST.poupMovs.filter(function(m){return m.tipo==='entrada';}).reduce(function(s,m){return s+(m.valor||0);},0);
+  var sai=ST.poupMovs.filter(function(m){return m.tipo==='saida';}).reduce(function(s,m){return s+(m.valor||0);},0);
+  sv('poup-total',fmt(ent-sai));sv('poup-ent',fmt(ent));sv('poup-sai',fmt(sai));
+  var el=document.getElementById('poup-movs');if(!el)return;
+  if(!ST.poupMovs.length){el.innerHTML='<div class="empty">Nenhuma movimentação</div>';return;}
+  el.innerHTML=ST.poupMovs.map(function(m){
+    var isEnt=m.tipo==='entrada';
+    return '<div class="mov-row">'+
+      '<div><div style="font-size:13px;font-weight:500">'+esc(m.desc)+'</div>'+
+      '<div style="font-size:11px;color:var(--tx3)">'+m.data+(m.evento?' · '+esc(m.evento):'')+'</div></div>'+
+      '<div style="display:flex;align-items:center;gap:10px">'+
+        '<span style="font-size:13px;font-weight:700;color:'+(isEnt?'var(--te)':'var(--re)')+'">'+(isEnt?'+':'-')+fmt(m.valor)+'</span>'+
+        '<button class="btn sm re" onclick="excluirMov(\''+m.id+'\')" style="padding:3px 7px">✕</button>'+
+      '</div></div>';
+  }).join('');
+}
+function addMovPoup(tipo){
+  var desc=prompt(tipo==='entrada'?'Descrição da entrada:':'Descrição da saída/retirada:','');
+  if(!desc)return;
+  var val=parseFloat(prompt('Valor (R$):','0')||0);if(!val||val<=0)return;
+  var mov={id:newId(),desc:desc,valor:val,tipo:tipo,
+    data:new Date().toLocaleDateString('pt-BR'),
+    evento:ST.evento?ST.evento.nome:'',ts:Date.now()};
+  apiPost({action:'salvarPoupMov',mov:mov}).then(function(d){
+    if(d.ok){ST.poupMovs.unshift(mov);renderPoupanca();toast((tipo==='entrada'?'Entrada':'Saída')+' registrada ✓');}
+    else toast('Erro: '+(d.error||'?'));
+  }).catch(function(){toast('Sem conexão');});
+}
+function excluirMov(id){
+  if(!confirm('Excluir esta movimentação do Sheets?'))return;
+  apiPost({action:'excluirPoupMov',id:id}).then(function(d){
+    if(d.ok){ST.poupMovs=ST.poupMovs.filter(function(m){return m.id!==id;});renderPoupanca();toast('Removido ✓');}
+    else toast('Erro: '+(d.error||'?'));
+  }).catch(function(){toast('Sem conexão');});
+}
+
+// ══════════════════════════════════════════════════════
+// RECIBOS
+// ══════════════════════════════════════════════════════
+function abrirModalRecibo(){document.getElementById('modal-rec').classList.add('show');}
+function emitirRecibo(){
+  var rec={id:newId(),eventoId:ST.eventoId,num:ST.proxRec,
+    evNome:ST.evento?ST.evento.nome:'',evData:ST.evento?ST.evento.data:'',
+    staffNome:gs('mr-staff'),staffCpf:gs('mr-cpf'),staffPix:gs('mr-pix'),
+    staffTipoPix:gs('mr-tipopix'),funcao:gs('mr-func'),valor:gv('mr-valor'),
+    dataPag:new Date().toLocaleDateString('pt-BR'),empresa:CFG.empresa,ts:Date.now()};
+  if(!rec.staffNome){toast('Preencha o nome do staff');return;}
+  apiPost({action:'salvarRecibo',recibo:rec}).then(function(d){
+    if(d.ok){
+      ST.proxRec++;ST.recibos.unshift(rec);
+      fecharModal('modal-rec');renderRecibos();
+      toast('Recibo #'+rec.num+' emitido ✓');
+      setTimeout(function(){imprimirRecibo(rec);},300);
+    } else toast('Erro: '+(d.error||'?'));
+  }).catch(function(){toast('Sem conexão');});
+}
+function renderRecibos(){
+  var tbody=document.getElementById('rec-body');if(!tbody)return;
+  if(!ST.recibos.length){tbody.innerHTML='<tr><td colspan="7" class="empty">Nenhum recibo</td></tr>';return;}
+  tbody.innerHTML=ST.recibos.map(function(r){
+    return '<tr>'+
+      '<td style="font-weight:700;color:var(--cor)">#'+r.num+'</td>'+
+      '<td>'+esc(r.staffNome)+'</td><td>'+esc(r.funcao||'—')+'</td>'+
+      '<td style="font-weight:600">'+fmt(r.valor)+'</td>'+
+      '<td style="color:var(--tx3)">'+esc(r.dataPag||'—')+'</td>'+
+      '<td><span class="badge '+(r.assinado?'badge-ok':'badge-pend')+'">'+(r.assinado?'Assinado':'Pendente')+'</span></td>'+
+      '<td><button class="btn sm" onclick="imprimirRecibo('+JSON.stringify(r).replace(/"/g,"'")+')">⎙</button></td>'+
+    '</tr>';
+  }).join('');
+}
+function imprimirRecibo(r){
+  var w=window.open('','_blank','width=700,height=600');
+  w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>Recibo #'+r.num+'</title>'+
+    '<style>body{font-family:Arial,sans-serif;padding:40px;font-size:13px;color:#222}'+
+    'h1{font-size:18px;color:#534AB7;margin-bottom:4px}.sub{color:#888;margin-bottom:24px}'+
+    'table{width:100%;border-collapse:collapse;margin:16px 0}td{padding:8px 0;border-bottom:1px solid #eee}'+
+    '.val{font-size:20px;font-weight:700;color:#1D9E75;margin:16px 0}'+
+    '.assin{margin-top:40px;display:flex;justify-content:space-between}'+
+    '.assin-box{border-top:1px solid #222;width:240px;padding-top:8px;font-size:11px;color:#666}'+
+    '@media print{body{padding:20px}}</style></head><body>'+
+    '<h1>'+CFG.empresa+'</h1><div class="sub">RECIBO DE PRESTAÇÃO DE SERVIÇOS</div>'+
+    '<div class="val">'+fmt(r.valor)+'</div>'+
+    '<table>'+
+      '<tr><td><b>Nº Recibo</b></td><td>#'+r.num+'</td></tr>'+
+      '<tr><td><b>Prestador</b></td><td>'+esc(r.staffNome)+'</td></tr>'+
+      '<tr><td><b>CPF</b></td><td>'+esc(r.staffCpf||'—')+'</td></tr>'+
+      '<tr><td><b>Função</b></td><td>'+esc(r.funcao||'—')+'</td></tr>'+
+      '<tr><td><b>Evento</b></td><td>'+esc(r.evNome||'—')+'</td></tr>'+
+      '<tr><td><b>Data</b></td><td>'+esc(r.dataPag||'—')+'</td></tr>'+
+      '<tr><td><b>PIX</b></td><td>'+esc(r.staffPix||'—')+' ('+esc(r.staffTipoPix||'')+')</td></tr>'+
+    '</table>'+
+    '<p>Declaro ter recebido a importância acima referente aos serviços prestados.</p>'+
+    '<div class="assin">'+
+      '<div class="assin-box">'+esc(r.staffNome)+'<br>Prestador de serviço</div>'+
+      '<div class="assin-box">'+CFG.responsavel+'<br>Responsável — '+CFG.empresa+'</div>'+
+    '</div>'+
+    '</body></html>');
+  w.document.close();setTimeout(function(){w.print();},400);
+}
+
+// ══════════════════════════════════════════════════════
+// STAFF FORMS
+// ══════════════════════════════════════════════════════
+function carregarStaff(){
+  setSyncStatus('⟳ Carregando staff...','load');
+  apiGet({action:'getStaff'}).then(function(d){
+    ST.staffForms=d.staff||[];renderStaff();
+    setSyncStatus('✓ Atualizado','ok');toast(ST.staffForms.length+' pessoas carregadas');
+  }).catch(function(){toast('Sem conexão');setSyncStatus('⚠ Offline','err');});
+}
+function renderStaff(){
+  var tbody=document.getElementById('staff-body');if(!tbody)return;
+  if(!ST.staffForms.length){tbody.innerHTML='<tr><td colspan="5" class="empty">Clique em "Atualizar" para carregar</td></tr>';return;}
+  tbody.innerHTML=ST.staffForms.map(function(s){
+    return '<tr>'+
+      '<td style="font-weight:500">'+esc(s.nome)+'</td>'+
+      '<td style="color:var(--tx2)">'+esc((s.funcoes||[]).join(', ')||'—')+'</td>'+
+      '<td>'+esc(s.chavePix||'—')+'</td>'+
+      '<td>'+esc(s.telefone||'—')+'</td>'+
+      '<td><button class="btn sm" onclick="usarStaff(\''+encodeURIComponent(JSON.stringify(s))+'\')">+ Usar</button></td>'+
+    '</tr>';
+  }).join('');
+}
+function usarStaff(encoded){
+  var s=JSON.parse(decodeURIComponent(encoded));
+  set('mf-staff',s.nome);set('mf-cpf',s.cpf||'');set('mf-pix',s.chavePix||'');
+  set('mf-nome',(s.funcoes||[])[0]||'');set('mf-valor',0);
+  document.getElementById('mf-pago').value='false';
+  document.getElementById('mf-id').value='';
+  document.getElementById('mf-title').textContent='Adicionar — '+s.nome;
+  fecharModal('modal-rec');
+  document.getElementById('modal-func').classList.add('show');
+  nav('funcoes');
+}
+
+// ══════════════════════════════════════════════════════
+// RELATÓRIOS
+// ══════════════════════════════════════════════════════
+function renderRelatorios(){
+  var totEnt=ST.hist.reduce(function(s,h){return s+(h.entrada||0);},0);
+  var totPag=ST.hist.reduce(function(s,h){return s+(h.pago||0);},0);
+  var totLuc=ST.hist.reduce(function(s,h){return s+(h.lucro||0);},0);
+  var totPoup=ST.hist.reduce(function(s,h){return s+(h.poup||0);},0);
+  sv('rel-ent',fmt(totEnt));sv('rel-pag',fmt(totPag));sv('rel-luc',fmt(totLuc));sv('rel-poup',fmt(totPoup));
+  var tbody=document.getElementById('rel-body');if(!tbody)return;
+  if(!ST.hist.length){tbody.innerHTML='<tr><td colspan="8" class="empty">Sem histórico</td></tr>';return;}
+  tbody.innerHTML=ST.hist.map(function(h,i){
+    var df=h.data?new Date(h.data+'T12:00:00').toLocaleDateString('pt-BR'):'—';
+    return '<tr>'+
+      '<td style="color:var(--tx3)">'+(i+1)+'</td>'+
+      '<td style="font-weight:500">'+esc(h.nome)+'</td><td>'+df+'</td>'+
+      '<td style="text-align:center">'+(h.atletas||0)+'</td>'+
+      '<td class="tag-pos" style="font-weight:600">'+fmt(h.entrada||0)+'</td>'+
+      '<td class="tag-neg" style="font-weight:600">'+fmt(h.pago||0)+'</td>'+
+      '<td style="color:var(--cor);font-weight:700">'+fmt(h.lucro||0)+'</td>'+
+      '<td style="color:var(--bl);font-weight:600">'+fmt(h.poup||0)+'</td>'+
+    '</tr>';
+  }).join('');
+}
+function exportPDF(){
+  var totEnt=ST.hist.reduce(function(s,h){return s+(h.entrada||0);},0);
+  var totPag=ST.hist.reduce(function(s,h){return s+(h.pago||0);},0);
+  var totLuc=ST.hist.reduce(function(s,h){return s+(h.lucro||0);},0);
+  var totPoup=ST.hist.reduce(function(s,h){return s+(h.poup||0);},0);
+  var linhas=ST.hist.map(function(h,i){
+    var df=h.data?new Date(h.data+'T12:00:00').toLocaleDateString('pt-BR'):'—';
+    return '<tr style="border-bottom:1px solid #eee">'+
+      '<td style="padding:6px 8px">'+(i+1)+'</td><td style="padding:6px 8px;font-weight:500">'+esc(h.nome)+'</td>'+
+      '<td style="padding:6px 8px">'+df+'</td><td style="padding:6px 8px;text-align:center">'+(h.atletas||0)+'</td>'+
+      '<td style="padding:6px 8px;color:#1D9E75;font-weight:600">'+fmt(h.entrada||0)+'</td>'+
+      '<td style="padding:6px 8px;color:#A32D2D;font-weight:600">'+fmt(h.pago||0)+'</td>'+
+      '<td style="padding:6px 8px;color:#534AB7;font-weight:700">'+fmt(h.lucro||0)+'</td>'+
+      '<td style="padding:6px 8px;color:#185FA5;font-weight:600">'+fmt(h.poup||0)+'</td></tr>';
+  }).join('');
+  var w=window.open('','_blank','width=960,height=800');
+  w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>Relatório Executivo</title>'+
+    '<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;padding:30px;font-size:12px;color:#222}'+
+    'h1{font-size:20px;font-weight:700;color:#534AB7}'+
+    '.kgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:16px 0 24px}'+
+    '.kpi{border:1px solid #ddd;border-radius:6px;padding:10px;border-top:3px solid #534AB7}'+
+    '.kl{font-size:9px;color:#888;text-transform:uppercase}'+
+    '.kv{font-size:15px;font-weight:700;margin-top:2px}'+
+    'table{width:100%;border-collapse:collapse}th{font-size:10px;color:#888;text-transform:uppercase;padding:8px;text-align:left;border-bottom:2px solid #eee}'+
+    '.tot td{border-top:2px solid #534AB7;font-weight:700;padding:8px}'+
+    '.ftr{margin-top:20px;padding-top:8px;border-top:1px solid #eee;font-size:10px;color:#aaa;display:flex;justify-content:space-between}'+
+    '@media print{body{padding:14px}}</style></head><body>'+
+    '<h1>'+CFG.empresa+'</h1>'+
+    '<div style="font-size:11px;color:#888;margin-bottom:16px">Relatório executivo · '+new Date().toLocaleString('pt-BR')+'</div>'+
+    '<div class="kgrid">'+
+      '<div class="kpi"><div class="kl">Total entradas</div><div class="kv" style="color:#1D9E75">'+fmt(totEnt)+'</div></div>'+
+      '<div class="kpi"><div class="kl">Total pagamentos</div><div class="kv" style="color:#A32D2D">'+fmt(totPag)+'</div></div>'+
+      '<div class="kpi"><div class="kl">Lucro total</div><div class="kv" style="color:#534AB7">'+fmt(totLuc)+'</div></div>'+
+      '<div class="kpi"><div class="kl">Poupança acumulada</div><div class="kv" style="color:#185FA5">'+fmt(totPoup)+'</div></div>'+
+    '</div>'+
+    '<table><thead><tr><th>#</th><th>Evento</th><th>Data</th><th>Atletas</th><th>Entrada</th><th>Pagamentos</th><th>Lucro</th><th>Poupança</th></tr></thead>'+
+    '<tbody>'+linhas+'</tbody>'+
+    '<tfoot><tr class="tot"><td colspan="4" style="text-align:right;color:#888;font-size:10px">Totais</td>'+
+      '<td style="color:#1D9E75">'+fmt(totEnt)+'</td><td style="color:#A32D2D">'+fmt(totPag)+'</td>'+
+      '<td style="color:#534AB7">'+fmt(totLuc)+'</td><td style="color:#185FA5">'+fmt(totPoup)+'</td></tr></tfoot></table>'+
+    '<div class="ftr"><span>'+CFG.empresa+'</span><span>'+new Date().toLocaleString('pt-BR')+'</span></div>'+
+    '</body></html>');
+  w.document.close();setTimeout(function(){w.print();},400);
+}
+function exportExcel(){
+  if(!window.XLSX){toast('Aguarde, carregando XLSX...');return;}
+  var wb=XLSX.utils.book_new();
+  var wsH=XLSX.utils.aoa_to_sheet([
+    ['RELATÓRIO EXECUTIVO — '+CFG.empresa],['Emitido em',new Date().toLocaleString('pt-BR')],[''],
+    ['Evento','Data','Atletas','Entrada','Pagamentos','Lucro','Poupança'],
+    ...ST.hist.map(function(h){return[h.nome,h.data,h.atletas||0,h.entrada||0,h.pago||0,h.lucro||0,h.poup||0];})
+  ]);
+  XLSX.utils.book_append_sheet(wb,wsH,'Histórico');
+  var wsR=XLSX.utils.aoa_to_sheet([
+    ['Nº','Evento','Staff','CPF','Função','Valor','Data','Assinado'],
+    ...ST.recibos.map(function(r){return[r.num,r.evNome,r.staffNome,r.staffCpf,r.funcao,r.valor,r.dataPag,r.assinado?'Sim':'Não'];})
+  ]);
+  XLSX.utils.book_append_sheet(wb,wsR,'Recibos');
+  XLSX.writeFile(wb,CFG.empresa.replace(/\s/g,'_')+'_'+new Date().toISOString().split('T')[0]+'.xlsx');
+  toast('Excel exportado ✓');
+}
+function imprimirEvento(){
+  var ent=gv('inp-ent');
+  var pago=ST.funcs.filter(function(f){return f.pago;}).reduce(function(s,f){return s+(f.valor||0);},0);
+  var pend=ST.funcs.filter(function(f){return !f.pago;}).reduce(function(s,f){return s+(f.valor||0);},0);
+  var luc=ent-(pago+pend),poup=luc>0?luc*(gv('inp-poup')/100):0;
+  var linhas=ST.funcs.map(function(f,i){return '<tr style="border-bottom:1px solid #eee">'+
+    '<td style="padding:5px 8px">'+(i+1)+'</td>'+
+    '<td style="padding:5px 8px;font-weight:500">'+esc(f.nome)+'</td>'+
+    '<td style="padding:5px 8px">'+esc(f.staff||'—')+'</td>'+
+    '<td style="padding:5px 8px;font-weight:600">'+fmt(f.valor)+'</td>'+
+    '<td style="padding:5px 8px;color:'+(f.pago?'#1D9E75':'#854F0B')+';font-weight:600">'+(f.pago?'Pago':'Pendente')+'</td></tr>';}).join('');
+  var w=window.open('','_blank','width=800,height=700');
+  w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>'+esc(gs('inp-nome'))+'</title>'+
+    '<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;padding:28px;font-size:12px}'+
+    'h1{font-size:18px;color:#534AB7;margin-bottom:2px}.kgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:14px 0}'+
+    '.kpi{border:1px solid #ddd;border-radius:6px;padding:8px;border-top:3px solid #534AB7}.kl{font-size:9px;color:#888;text-transform:uppercase}.kv{font-size:13px;font-weight:700}'+
+    'table{width:100%;border-collapse:collapse}th{font-size:10px;color:#888;text-transform:uppercase;padding:6px 8px;text-align:left;border-bottom:2px solid #eee}'+
+    '@media print{body{padding:14px}}</style></head><body>'+
+    '<h1>'+esc(gs('inp-nome')||'Evento')+'</h1>'+
+    '<div style="font-size:11px;color:#888;margin-bottom:12px">'+esc(gs('inp-data')||'—')+' · '+
+      (parseInt(document.getElementById('inp-atl')?.value)||0)+' atletas · Emitido em '+new Date().toLocaleString('pt-BR')+'</div>'+
+    '<div class="kgrid">'+
+      '<div class="kpi"><div class="kl">Entrada</div><div class="kv" style="color:#1D9E75">'+fmt(ent)+'</div></div>'+
+      '<div class="kpi"><div class="kl">Pago</div><div class="kv" style="color:#A32D2D">'+fmt(pago)+'</div></div>'+
+      '<div class="kpi"><div class="kl">Pendente</div><div class="kv" style="color:#854F0B">'+fmt(pend)+'</div></div>'+
+      '<div class="kpi"><div class="kl">Lucro</div><div class="kv" style="color:#534AB7">'+fmt(luc)+'</div></div>'+
+      '<div class="kpi"><div class="kl">Poupança</div><div class="kv" style="color:#185FA5">'+fmt(poup)+'</div></div>'+
+    '</div>'+
+    '<table><thead><tr><th>#</th><th>Função</th><th>Staff</th><th>Valor</th><th>Status</th></tr></thead>'+
+    '<tbody>'+linhas+'</tbody></table>'+
+    '</body></html>');
+  w.document.close();setTimeout(function(){w.print();},400);
+}
+
+// ══════════════════════════════════════════════════════
+// CONFIGURAÇÕES
+// ══════════════════════════════════════════════════════
+function salvarConfig(){
+  var url=gs('cfg-url');if(!url){toast('Preencha a URL');return;}
+  ST.url=url;localStorage.setItem('vbn5_url',url);
+  toast('URL salva ✓');carregarTudo();
+}
+function salvarSenhas(){
+  var a=gs('cfg-sen-admin'),o=gs('cfg-sen-op');
+  if(a){ST.senAdmin=a;localStorage.setItem('vbn5_sa',a);}
+  if(o){ST.senOp=o;localStorage.setItem('vbn5_so',o);}
+  toast('Senhas atualizadas ✓');
+}
+function testarConexao(){
+  var url=gs('cfg-url')||ST.url;if(!url){toast('Preencha a URL primeiro');return;}
+  var s=document.getElementById('cfg-status');if(s)s.textContent='Testando...';
+  fetch(url+'?action=ping').then(function(r){return r.json();}).then(function(d){
+    if(s)s.textContent='✓ Conectado: '+JSON.stringify(d);toast('Conexão OK ✓');
+  }).catch(function(e){if(s)s.textContent='✗ Erro: '+e.message;toast('Sem resposta');});
+}
+
+// ══════════════════════════════════════════════════════
+// NAVEGAÇÃO
+// ══════════════════════════════════════════════════════
+function nav(p){
+  document.querySelectorAll('.page').forEach(function(e){e.classList.remove('act');});
+  var pg=document.getElementById('page-'+p);if(pg)pg.classList.add('act');
+  document.querySelectorAll('.ni').forEach(function(e){e.classList.remove('act');});
+  var ni=document.querySelector('.ni[onclick*="\''+p+'\'"]');if(ni)ni.classList.add('act');
+  var titles={dashboard:'Dashboard',funcoes:'Funções & Staff',balanco:'Balanço',
+    poupanca:'Poupança',configurar:'Configurar Evento',historico:'Histórico',
+    recibos:'Recibos Emitidos',staff:'Staff (Forms)',relatorios:'Relatórios',config:'Configurações'};
+  sv('topbar-title',titles[p]||p);
+  if(p==='poupanca')renderPoupanca();
+  if(p==='relatorios')renderRelatorios();
+  if(p==='recibos')renderRecibos();
+  if(p==='historico')renderHist();
+  if(p==='staff')renderStaff();
+  if(p==='config'){set('cfg-url',ST.url);}
+}
+function fecharModal(id){document.getElementById(id)?.classList.remove('show');}
+
+// Fechar modal ao clicar fora
+document.addEventListener('click',function(e){
+  if(e.target.classList.contains('modal-bg'))e.target.classList.remove('show');
+});
+
+// Init
+window.addEventListener('DOMContentLoaded',function(){
+  if(ST.url)set('cfg-url',ST.url);
+});
+</script>
+</body>
+</html>
